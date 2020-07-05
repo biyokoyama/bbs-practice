@@ -1,0 +1,44 @@
+name: app
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:12
+        env:
+          POSTGRES_DB: bbs_rails_db
+          POSTGRES_USER: bbs_rails_db_user
+          POSTGRES_PASSWORD: bbs_rails_db_p@ssw0rd
+    container:
+      image: ruby:2.6.5
+      env:
+        DB_HOST: db
+        DB_NAME: bbs_rails_db
+        DB_USER: bbs_rails_db_user
+        DB_PASSWORD: bbs_rails_db_p@ssw0rd
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install yarn
+      run: |
+        curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - &&
+        echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list &&
+        apt-get update && apt-get install -y yarn
+    - name: yarn --frozen-lockfile
+      run: yarn --frozen-lockfile
+    - name: yarn build
+      run: yarn build
+    - name: Run frontend tests
+      run: |
+        yarn test &&
+        CODECOV_TOKEN=${{secrets.CODECOV_TOKEN}} yarn -s codecov
+    - name: bundle install
+      run: bundle install --jobs=4 --retry=3
+    - name: Run backend tests
+      run: CODECOV_TOKEN=${{secrets.CODECOV_TOKEN}} bundle exec rspec
