@@ -28,7 +28,15 @@ module.exports = (env, argv) => {
         {
           test: /\.js$/,
           loader: 'babel-loader'
-        }
+        },
+        {
+          test: /\.(css|scss)$/,
+          use: [
+            'vue-style-loader',
+            'css-loader',
+            'sass-loader'
+          ],
+        },
       ]
     },
     plugins: [
