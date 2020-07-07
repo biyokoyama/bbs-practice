@@ -26,7 +26,12 @@ services:
       - vol_db:/var/lib/postgresql/data
   app:
     build: .
-    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 3000 -b '0.0.0.0'"
+    command: |
+      bash -c "
+        bundle install --jobs=4 --retry=3 &&
+        rm -f tmp/pids/server.pid &&
+        bundle exec rails s -p 3000 -b '0.0.0.0'
+      "
     environment:
       DB_HOST: db
       DB_NAME: *DB_NAME
@@ -37,16 +42,23 @@ services:
     volumes:
       - .:/myapp
       - vol_web_bundle:/usr/local/bundle
+      - vol_web_node_modules:/myapp/node_modules
     depends_on:
       - db
   webpack-dev-server:
     build: .
-    command: yarn start --host 0.0.0.0
+    command: |
+      bash -c "
+        yarn install &&
+        yarn start --host 0.0.0.0
+      "
     ports:
       - 8080:8080
     volumes:
       - .:/myapp
       - vol_web_bundle:/usr/local/bundle
+      - vol_web_node_modules:/myapp/node_modules
 volumes:
   vol_db:
   vol_web_bundle:
+  vol_web_node_modules:
